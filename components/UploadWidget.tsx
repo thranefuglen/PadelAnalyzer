@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
-import { videoCompressor } from '@/lib/video-compression'
+// Video compression temporarily disabled
 
 export default function UploadWidget() {
   const [file, setFile] = useState<File | null>(null)
@@ -29,24 +29,9 @@ export default function UploadWidget() {
       // Check if file needs compression
       const fileSizeMB = selectedFile.size / (1024 * 1024)
       if (fileSizeMB > 10) {
-        // File is too large, compress it
-        setIsCompressing(true)
-        setCompressionProgress(0)
-
-        try {
-          const compressedFile = await videoCompressor.compress(selectedFile, {
-            maxSizeMB: 8, // Target 8MB to have some buffer
-            onProgress: (progress) => setCompressionProgress(progress)
-          })
-
-          setFile(compressedFile)
-          setIsCompressing(false)
-        } catch (compressionError) {
-          console.error('Compression failed:', compressionError)
-          setError('Failed to compress video. Please try a smaller file or different format.')
-          setIsCompressing(false)
-          return
-        }
+        // File is too large - show error for now
+        setError(`File is ${fileSizeMB.toFixed(1)}MB. Please use a file smaller than 10MB. Video compression is temporarily unavailable.`)
+        return
       } else {
         setFile(selectedFile)
       }
@@ -128,7 +113,7 @@ export default function UploadWidget() {
       <CardHeader>
         <CardTitle>Upload Padel Video</CardTitle>
         <CardDescription>
-          Upload a padel video (shot from behind) for analysis. Files over 10MB will be automatically compressed.
+          Upload a padel video (shot from behind) for analysis. Max 10MB file size.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">

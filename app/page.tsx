@@ -11,7 +11,7 @@ export default function Home() {
           Analyze your padel technique with AI-powered pose detection.
           Upload a video shot from behind and get detailed metrics on your form.
           <br />
-          <span className="text-sm text-gray-500 mt-2 block">Automatic video compression for larger files</span>
+          <span className="text-sm text-gray-500 mt-2 block">Demo version - max 10MB file size</span>
         </p>
       </div>
 

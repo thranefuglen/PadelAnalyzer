@@ -5,22 +5,51 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
+import { videoCompressor } from '@/lib/video-compression'
 
 export default function UploadWidget() {
   const [file, setFile] = useState<File | null>(null)
   const [uploadId, setUploadId] = useState<string | null>(null)
   const [isUploading, setIsUploading] = useState(false)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [isCompressing, setIsCompressing] = useState(false)
+  const [compressionProgress, setCompressionProgress] = useState(0)
   const [error, setError] = useState<string | null>(null)
+  const [originalSize, setOriginalSize] = useState<number | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0]
     if (selectedFile) {
-      setFile(selectedFile)
+      setOriginalSize(selectedFile.size)
       setUploadId(null)
       setError(null)
+
+      // Check if file needs compression
+      const fileSizeMB = selectedFile.size / (1024 * 1024)
+      if (fileSizeMB > 10) {
+        // File is too large, compress it
+        setIsCompressing(true)
+        setCompressionProgress(0)
+
+        try {
+          const compressedFile = await videoCompressor.compress(selectedFile, {
+            maxSizeMB: 8, // Target 8MB to have some buffer
+            onProgress: (progress) => setCompressionProgress(progress)
+          })
+
+          setFile(compressedFile)
+          setIsCompressing(false)
+        } catch (compressionError) {
+          console.error('Compression failed:', compressionError)
+          setError('Failed to compress video. Please try a smaller file or different format.')
+          setIsCompressing(false)
+          return
+        }
+      } else {
+        setFile(selectedFile)
+      }
     }
   }
 
@@ -99,7 +128,7 @@ export default function UploadWidget() {
       <CardHeader>
         <CardTitle>Upload Padel Video</CardTitle>
         <CardDescription>
-          Upload a padel video (shot from behind) for analysis. Max 10MB.
+          Upload a padel video (shot from behind) for analysis. Files over 10MB will be automatically compressed.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -116,19 +145,34 @@ export default function UploadWidget() {
             variant="outline"
             onClick={() => fileInputRef.current?.click()}
             className="w-full"
-            disabled={isUploading || isAnalyzing}
+            disabled={isUploading || isAnalyzing || isCompressing}
           >
-            {file ? file.name : 'Choose Video File'}
+            {isCompressing ? 'Compressing...' : file ? file.name : 'Choose Video File'}
           </Button>
         </div>
 
         {file && (
-          <div className="text-sm text-muted-foreground">
-            Size: {Math.round(file.size / 1024 / 1024 * 100) / 100} MB
+          <div className="text-sm text-muted-foreground space-y-1">
+            <div>Size: {Math.round(file.size / 1024 / 1024 * 100) / 100} MB</div>
+            {originalSize && originalSize !== file.size && (
+              <div className="text-green-600">
+                Compressed from {Math.round(originalSize / 1024 / 1024 * 100) / 100} MB
+                ({Math.round((1 - file.size / originalSize) * 100)}% smaller)
+              </div>
+            )}
           </div>
         )}
 
-        {file && !uploadId && (
+        {isCompressing && (
+          <div className="space-y-2">
+            <Progress value={compressionProgress} />
+            <p className="text-sm text-muted-foreground text-center">
+              Compressing video... {Math.round(compressionProgress)}%
+            </p>
+          </div>
+        )}
+
+        {file && !uploadId && !isCompressing && (
           <Button
             onClick={handleUpload}
             disabled={isUploading}

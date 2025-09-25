@@ -99,7 +99,7 @@ export default function UploadWidget() {
       <CardHeader>
         <CardTitle>Upload Padel Video</CardTitle>
         <CardDescription>
-          Upload a padel video (shot from behind) for analysis
+          Upload a padel video (shot from behind) for analysis. Max 10MB.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">

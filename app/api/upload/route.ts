@@ -22,11 +22,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate file size (100MB limit)
-    const maxSize = 100 * 1024 * 1024; // 100MB
+    // Validate file size (10MB limit for Vercel serverless)
+    const maxSize = 10 * 1024 * 1024; // 10MB
     if (file.size > maxSize) {
       return NextResponse.json(
-        { error: 'File too large. Maximum size is 100MB.' },
+        { error: 'File too large. Maximum size is 10MB for this demo.' },
         { status: 400 }
       );
     }

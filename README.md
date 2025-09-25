@@ -77,7 +77,7 @@ A minimal web application for analyzing padel video technique using AI-powered p
 - MP4 (recommended)
 - MOV (QuickTime)
 - AVI
-- Maximum file size: 100MB
+- Maximum file size: 10MB (Vercel demo limitation)
 
 ## Architecture
 

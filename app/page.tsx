@@ -10,6 +10,8 @@ export default function Home() {
         <p className="text-lg text-gray-600 max-w-2xl mx-auto">
           Analyze your padel technique with AI-powered pose detection.
           Upload a video shot from behind and get detailed metrics on your form.
+          <br />
+          <span className="text-sm text-gray-500 mt-2 block">Demo version - max 10MB file size</span>
         </p>
       </div>
 

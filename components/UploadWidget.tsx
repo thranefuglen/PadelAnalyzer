@@ -5,87 +5,84 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
-// Video compression temporarily disabled
+import { detectPoseFromVideo } from '@/lib/pose-detector'
 
 export default function UploadWidget() {
-  const [file, setFile] = useState<File | null>(null)
   const [uploadId, setUploadId] = useState<string | null>(null)
   const [isUploading, setIsUploading] = useState(false)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
-  const [isCompressing, setIsCompressing] = useState(false)
-  const [compressionProgress, setCompressionProgress] = useState(0)
+  const [analysisProgress, setAnalysisProgress] = useState(0)
   const [error, setError] = useState<string | null>(null)
-  const [originalSize, setOriginalSize] = useState<number | null>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const videoRef = useRef<HTMLVideoElement>(null)
   const router = useRouter()
 
-  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = event.target.files?.[0]
-    if (selectedFile) {
-      setOriginalSize(selectedFile.size)
-      setUploadId(null)
-      setError(null)
-
-      // Check if file needs compression
-      const fileSizeMB = selectedFile.size / (1024 * 1024)
-      if (fileSizeMB > 10) {
-        // File is too large - show error for now
-        setError(`File is ${fileSizeMB.toFixed(1)}MB. Please use a file smaller than 10MB. Video compression is temporarily unavailable.`)
-        return
-      } else {
-        setFile(selectedFile)
-      }
-    }
-  }
-
-  const handleUpload = async () => {
-    if (!file) return
-
+  const handleUseTestVideo = async () => {
     setIsUploading(true)
     setError(null)
-
-    const formData = new FormData()
-    formData.append('file', file)
 
     try {
       const response = await fetch('/api/upload', {
         method: 'POST',
-        body: formData,
+        body: JSON.stringify({}),
+        headers: {
+          'Content-Type': 'application/json',
+        },
       })
 
-      const responseText = await response.text()
-      let data
-      try {
-        data = JSON.parse(responseText)
-      } catch (jsonError) {
-        throw new Error(`Server returned non-JSON response: ${responseText.substring(0, 100)}`)
-      }
+      const data = await response.json()
+      console.log('Upload response:', data)
 
       if (!response.ok) {
-        throw new Error(data.error || 'Upload failed')
+        throw new Error(data.error || 'Failed to load test video')
       }
 
       setUploadId(data.uploadId)
+      console.log('Upload ID set to:', data.uploadId)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Upload failed')
+      console.error('Upload error:', err)
+      setError(err instanceof Error ? err.message : 'Failed to load test video')
     } finally {
       setIsUploading(false)
     }
   }
 
   const handleAnalyze = async () => {
-    if (!uploadId) return
+    if (!uploadId || !videoRef.current) return
 
     setIsAnalyzing(true)
+    setAnalysisProgress(10)
     setError(null)
 
     try {
+      // Load test video
+      const videoElement = videoRef.current
+      videoElement.src = '/api/test-video'
+
+      await new Promise((resolve, reject) => {
+        videoElement.onloadedmetadata = resolve
+        videoElement.onerror = reject
+      })
+
+      setAnalysisProgress(30)
+
+      // Run pose detection on the video
+      console.log('Starting pose detection...')
+      const poseResult = await detectPoseFromVideo(videoElement)
+      console.log('Pose detection complete:', poseResult)
+
+      setAnalysisProgress(70)
+
+      // Send pose data to backend for analysis
       const response = await fetch('/api/analyze', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ uploadId }),
+        body: JSON.stringify({
+          uploadId,
+          poseData: poseResult.poseData,
+          fps: poseResult.fps
+        }),
       })
 
       const responseText = await response.text()
@@ -100,106 +97,75 @@ export default function UploadWidget() {
         throw new Error(data.error || 'Analysis failed')
       }
 
+      setAnalysisProgress(100)
+
       // Redirect to results page
       router.push(`/analyses/${data.analysisId}`)
     } catch (err) {
+      console.error('Analysis error:', err)
       setError(err instanceof Error ? err.message : 'Analysis failed')
       setIsAnalyzing(false)
+      setAnalysisProgress(0)
     }
   }
 
   return (
-    <Card className="w-full max-w-md mx-auto">
-      <CardHeader>
-        <CardTitle>Upload Padel Video</CardTitle>
-        <CardDescription>
-          Upload a padel video (shot from behind) for analysis. Max 10MB file size.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="video/mp4,video/quicktime,video/x-msvideo"
-            onChange={handleFileSelect}
-            className="hidden"
-            id="video-upload"
-          />
-          <Button
-            variant="outline"
-            onClick={() => fileInputRef.current?.click()}
-            className="w-full"
-            disabled={isUploading || isAnalyzing || isCompressing}
-          >
-            {isCompressing ? 'Compressing...' : file ? file.name : 'Choose Video File'}
-          </Button>
-        </div>
+    <>
+      <video ref={videoRef} className="hidden" crossOrigin="anonymous" />
 
-        {file && (
-          <div className="text-sm text-muted-foreground space-y-1">
-            <div>Size: {Math.round(file.size / 1024 / 1024 * 100) / 100} MB</div>
-            {originalSize && originalSize !== file.size && (
-              <div className="text-green-600">
-                Compressed from {Math.round(originalSize / 1024 / 1024 * 100) / 100} MB
-                ({Math.round((1 - file.size / originalSize) * 100)}% smaller)
-              </div>
-            )}
-          </div>
-        )}
+      <Card className="w-full max-w-md mx-auto">
+        <CardHeader>
+          <CardTitle>Analyze Test Video</CardTitle>
+          <CardDescription>
+            Using test video: Single hit.mp4 (player in white outfit)
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {!uploadId && !isUploading && (
+            <Button
+              onClick={handleUseTestVideo}
+              className="w-full"
+            >
+              Load Test Video
+            </Button>
+          )}
 
-        {isCompressing && (
-          <div className="space-y-2">
-            <Progress value={compressionProgress} />
-            <p className="text-sm text-muted-foreground text-center">
-              Compressing video... {Math.round(compressionProgress)}%
-            </p>
-          </div>
-        )}
+          {isUploading && (
+            <div className="space-y-2">
+              <Progress value={75} />
+              <p className="text-sm text-muted-foreground text-center">
+                Loading test video...
+              </p>
+            </div>
+          )}
 
-        {file && !uploadId && !isCompressing && (
-          <Button
-            onClick={handleUpload}
-            disabled={isUploading}
-            className="w-full"
-          >
-            {isUploading ? 'Uploading...' : 'Upload Video'}
-          </Button>
-        )}
+          {uploadId && !isAnalyzing && (
+            <Button
+              onClick={handleAnalyze}
+              className="w-full"
+            >
+              Analyze Video with Pose Detection
+            </Button>
+          )}
 
-        {isUploading && (
-          <div className="space-y-2">
-            <Progress value={75} />
-            <p className="text-sm text-muted-foreground text-center">
-              Uploading video...
-            </p>
-          </div>
-        )}
+          {isAnalyzing && (
+            <div className="space-y-2">
+              <Progress value={analysisProgress} />
+              <p className="text-sm text-muted-foreground text-center">
+                {analysisProgress < 30 && 'Loading video...'}
+                {analysisProgress >= 30 && analysisProgress < 70 && 'Running pose detection...'}
+                {analysisProgress >= 70 && 'Finalizing analysis...'}
+              </p>
+            </div>
+          )}
 
-        {uploadId && !isAnalyzing && (
-          <Button
-            onClick={handleAnalyze}
-            className="w-full"
-          >
-            Analyze Video
-          </Button>
-        )}
-
-        {isAnalyzing && (
-          <div className="space-y-2">
-            <Progress value={50} />
-            <p className="text-sm text-muted-foreground text-center">
-              Analyzing video... This may take a moment.
-            </p>
-          </div>
-        )}
-
-        {error && (
-          <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md">
-            {error}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+          {error && (
+            <div className="p-3 text-sm text-red-400 bg-red-950/20 border border-red-900/30 rounded-md">
+              {error}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </>
   )
 }

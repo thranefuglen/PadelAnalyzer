@@ -9,8 +9,17 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@ffmpeg/ffmpeg": "^0.12.15",
+    "@ffmpeg/util": "^0.12.2",
+    "@mediapipe/tasks-vision": "^0.10.22-rc.20250304",
+    "@tensorflow-models/pose-detection": "^2.1.3",
+    "@tensorflow/tfjs-backend-webgl": "^4.22.0",
+    "@tensorflow/tfjs-core": "^4.22.0",
+    "@types/fluent-ffmpeg": "^2.1.27",
     "autoprefixer": "^10.4.21",
+    "canvas": "^3.2.0",
     "clsx": "^2.1.1",
+    "fluent-ffmpeg": "^2.1.3",
     "next": "14.2.11",
     "react": "^18",
     "react-dom": "^18",

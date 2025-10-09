@@ -5,6 +5,9 @@ import { useParams, useRouter } from 'next/navigation'
 import { AnalysisResult } from '@/lib/vercel-storage'
 import AnalysisSummary from '@/components/AnalysisSummary'
 import AnalysisCharts from '@/components/AnalysisCharts'
+import PoseVisualization from '@/components/PoseVisualization'
+import ComparisonVisualization from '@/components/ComparisonVisualization'
+import ComparisonMetrics from '@/components/ComparisonMetrics'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
@@ -16,12 +19,22 @@ interface AnalysisResponse {
   error?: string
 }
 
+interface ReferenceData {
+  videoName: string
+  analyzedAt: string
+  metrics: any
+  fps: number
+  frameCount: number
+  poseData: any[]
+}
+
 export default function AnalysisPage() {
   const params = useParams()
   const router = useRouter()
   const analysisId = params.id as string
 
   const [analysis, setAnalysis] = useState<AnalysisResponse | null>(null)
+  const [referenceData, setReferenceData] = useState<ReferenceData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -57,7 +70,20 @@ export default function AnalysisPage() {
       }
     }
 
+    const fetchReferenceData = async () => {
+      try {
+        const response = await fetch('/api/analyze-reference')
+        if (response.ok) {
+          const data = await response.json()
+          setReferenceData(data)
+        }
+      } catch (err) {
+        console.log('No reference data available')
+      }
+    }
+
     fetchAnalysis()
+    fetchReferenceData()
   }, [analysisId])
 
   if (loading) {
@@ -165,6 +191,39 @@ export default function AnalysisPage() {
           Analysis ID: <code className="text-sm bg-gray-100 px-2 py-1 rounded">{analysisId}</code>
         </p>
       </div>
+
+      {/* Comparison Visualization - Show if reference data is available */}
+      {analysis.result.poseData && referenceData && analysis.result.comparison && (
+        <div className="mb-8">
+          <ComparisonVisualization
+            userPoseData={analysis.result.poseData}
+            referencePoseData={referenceData.poseData}
+            userVideoPath={analysis.result.meta.videoPath}
+            referenceVideoPath="/api/reference-video"
+          />
+        </div>
+      )}
+
+      {/* Comparison Metrics */}
+      {analysis.result.referenceMetrics && analysis.result.comparison && (
+        <div className="mb-8">
+          <ComparisonMetrics
+            userMetrics={analysis.result.metrics}
+            referenceMetrics={analysis.result.referenceMetrics}
+            comparison={analysis.result.comparison}
+          />
+        </div>
+      )}
+
+      {/* Pose Visualization */}
+      {analysis.result.poseData && (
+        <div className="mb-8">
+          <PoseVisualization
+            poseData={analysis.result.poseData}
+            videoPath={analysis.result.meta.videoPath}
+          />
+        </div>
+      )}
 
       {/* Analysis Summary */}
       <AnalysisSummary result={analysis.result} />

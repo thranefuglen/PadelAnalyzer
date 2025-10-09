@@ -1,25 +1,34 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { v4 as uuidv4 } from 'uuid';
-import { saveAnalysisResult } from '@/lib/vercel-storage';
-import type { AnalysisResult } from '@/lib/vercel-storage';
-import type { PoseFrame } from '@/lib/pose-data';
+import { NextResponse } from 'next/server';
 import path from 'path';
 import fs from 'fs/promises';
+import type { PoseFrame } from '@/lib/pose-data';
 
-const TEST_VIDEO_PATH = path.join(process.cwd(), 'PadelVideos', 'Bad Slice.mp4');
 const REFERENCE_VIDEO_PATH = path.join(process.cwd(), 'PadelVideos', 'Good Slice.mp4');
 const REFERENCE_DATA_PATH = path.join(process.cwd(), 'data', 'reference-analysis.json');
 
-export async function POST(request: NextRequest) {
+export async function POST() {
   try {
-    const { uploadId, poseData, fps } = await request.json();
+    // Check if reference video exists
+    await fs.access(REFERENCE_VIDEO_PATH);
 
-    if (!uploadId) {
-      return NextResponse.json(
-        { error: 'Upload ID is required' },
-        { status: 400 }
-      );
-    }
+    // Return the video path so the client can analyze it
+    return NextResponse.json({
+      message: 'Reference video ready for analysis',
+      videoPath: '/api/reference-video'
+    });
+
+  } catch (error) {
+    console.error('Error preparing reference video:', error);
+    return NextResponse.json(
+      { error: 'Failed to prepare reference video' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PUT(request: Request) {
+  try {
+    const { poseData, fps } = await request.json();
 
     if (!poseData || !Array.isArray(poseData)) {
       return NextResponse.json(
@@ -28,68 +37,57 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const analysisId = uuidv4();
     const frames = poseData as PoseFrame[];
-
-    // Calculate metrics from pose data
     const metrics = calculateMetricsFromPose(frames);
 
-    // Load reference data if available
-    let referenceMetrics = null;
-    let comparison = null;
-    try {
-      const refData = await fs.readFile(REFERENCE_DATA_PATH, 'utf-8');
-      const referenceAnalysis = JSON.parse(refData);
-      referenceMetrics = referenceAnalysis.metrics;
-
-      // Calculate comparison
-      comparison = {
-        elbowAngleDiff: metrics.elbowAngleMax - referenceMetrics.elbowAngleMax,
-        shoulderRotationDiff: metrics.shoulderRotationProxy - referenceMetrics.shoulderRotationProxy,
-        referenceVideo: referenceAnalysis.videoName
-      };
-    } catch (error) {
-      console.log('No reference data found, skipping comparison');
-    }
-
-    // Create analysis result from real pose detection
-    const analysisResult: AnalysisResult = {
-      summary: {
-        strokeGuess: "volley",
-        confidence: 0.85
-      },
+    const referenceData = {
+      videoName: 'Good Slice.mp4',
+      analyzedAt: new Date().toISOString(),
       metrics,
-      referenceMetrics,
-      comparison,
-      meta: {
-        fps: fps || 30,
-        sampleMs: frames.length > 1 ? frames[1].timestamp - frames[0].timestamp : 33,
-        framesUsed: frames.length,
-        fallback: false,
-        videoPath: TEST_VIDEO_PATH
-      },
+      fps: fps || 30,
+      frameCount: frames.length,
       poseData: frames
     };
 
-    // Save the analysis result
-    await saveAnalysisResult(analysisId, analysisResult);
+    // Ensure data directory exists
+    const dataDir = path.join(process.cwd(), 'data');
+    await fs.mkdir(dataDir, { recursive: true });
+
+    // Save reference data
+    await fs.writeFile(
+      REFERENCE_DATA_PATH,
+      JSON.stringify(referenceData, null, 2)
+    );
 
     return NextResponse.json({
-      analysisId,
-      message: 'Analysis completed successfully using real pose detection'
+      message: 'Reference analysis saved successfully',
+      metrics
     });
 
   } catch (error) {
-    console.error('Analysis error:', error);
+    console.error('Error saving reference analysis:', error);
     return NextResponse.json(
-      { error: 'Failed to analyze video' },
+      { error: 'Failed to save reference analysis' },
       { status: 500 }
     );
   }
 }
 
+export async function GET() {
+  try {
+    const data = await fs.readFile(REFERENCE_DATA_PATH, 'utf-8');
+    const referenceData = JSON.parse(data);
+
+    return NextResponse.json(referenceData);
+  } catch (error) {
+    return NextResponse.json(
+      { error: 'No reference data found. Please analyze the reference video first.' },
+      { status: 404 }
+    );
+  }
+}
+
 function calculateMetricsFromPose(frames: PoseFrame[]) {
-  // Calculate elbow angle (right arm - index 14 = right elbow, 12 = right shoulder, 16 = right wrist)
   let maxElbowAngle = 0;
 
   for (const frame of frames) {
@@ -104,7 +102,6 @@ function calculateMetricsFromPose(frames: PoseFrame[]) {
     }
   }
 
-  // Calculate shoulder rotation proxy (distance between shoulders over time)
   const shoulderRotations: number[] = [];
   for (const frame of frames) {
     const leftShoulder = frame.keypoints[11];
@@ -124,23 +121,21 @@ function calculateMetricsFromPose(frames: PoseFrame[]) {
     ? Math.max(...shoulderRotations) - Math.min(...shoulderRotations)
     : 0;
 
-  // Create tempo series (wrist velocity over time)
   const tempoSeries: [number, number][] = [];
   for (let i = 1; i < frames.length; i++) {
-    const prev = frames[i - 1].keypoints[16]; // right wrist
+    const prev = frames[i - 1].keypoints[16];
     const curr = frames[i].keypoints[16];
 
     if (prev && curr && prev.visibility > 0.5 && curr.visibility > 0.5) {
       const velocity = Math.sqrt(
         Math.pow(curr.x - prev.x, 2) +
         Math.pow(curr.y - prev.y, 2)
-      ) * 100; // Scale up for visibility
+      ) * 100;
 
       tempoSeries.push([frames[i].timestamp, velocity]);
     }
   }
 
-  // Detect impact frames (peaks in velocity)
   const impactFrames: number[] = [];
   for (let i = 1; i < tempoSeries.length - 1; i++) {
     if (tempoSeries[i][1] > tempoSeries[i - 1][1] &&

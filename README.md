@@ -189,4 +189,14 @@ This is a minimal MVP designed for easy extension. Areas for improvement:
 
 ## License
 
-MIT License - Feel free to use this as a starting point for your own padel analysis application.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+### Third-Party Licenses
+
+This project uses open-source libraries with permissive licenses that allow commercial use:
+- MIT License: Next.js, React, Tailwind CSS, Recharts, FFmpeg.wasm, and others
+- Apache 2.0: MediaPipe Tasks Vision
+
+All third-party licenses and copyright notices are documented in [LICENSES.md](LICENSES.md).
+
+**Commercial Use:** All dependencies permit commercial use without restrictions. You are free to use this software for commercial purposes while complying with the attribution requirements outlined in the license files.

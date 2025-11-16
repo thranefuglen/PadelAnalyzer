@@ -47,8 +47,12 @@ export default function ReferenceAnalysisButton() {
       video.src = '/api/reference-video'
       video.crossOrigin = 'anonymous'
 
-      await new Promise((resolve) => {
+      await new Promise((resolve, reject) => {
         video.onloadedmetadata = resolve
+        video.onerror = () => reject(new Error('Video file not found. Please add "Good Slice.mp4" to the PadelVideos directory.'))
+
+        // Timeout after 10 seconds
+        setTimeout(() => reject(new Error('Video loading timed out. Please check that "Good Slice.mp4" exists in the PadelVideos directory.')), 10000)
       })
 
       const fps = 30
@@ -101,8 +105,9 @@ export default function ReferenceAnalysisButton() {
 
     } catch (error) {
       console.error('Reference analysis error:', error)
-      setStatus('✗ Failed to analyze reference')
-      setTimeout(() => setStatus(''), 3000)
+      const errorMessage = error instanceof Error ? error.message : 'Failed to analyze reference'
+      setStatus(`✗ ${errorMessage}`)
+      setTimeout(() => setStatus(''), 5000)
     } finally {
       setIsAnalyzing(false)
     }

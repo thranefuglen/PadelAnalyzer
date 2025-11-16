@@ -5,7 +5,7 @@ A minimal web application for analyzing padel video technique using AI-powered p
 ## Features
 
 - **Mobile-first responsive design** - Works seamlessly on mobile and desktop
-- **Video upload** - Support for MP4, MOV, and AVI files up to 100MB
+- **Video upload** - Support for MP4, MOV, and AVI files up to 10MB
 - **AI-powered analysis** - Uses MediaPipe Pose detection with intelligent fallback
 - **Real-time metrics** - Elbow angle, shoulder rotation, movement tempo, and impact detection
 - **Visual charts** - Interactive movement analysis with Recharts
@@ -23,8 +23,10 @@ A minimal web application for analyzing padel video technique using AI-powered p
 
 ### Installation
 
-1. **Clone and install dependencies:**
+1. **Clone the repository and install dependencies:**
    ```bash
+   git clone https://github.com/thranefuglen/PadelAnalyzer.git
+   cd PadelAnalyzer
    npm install
    ```
 
@@ -91,6 +93,10 @@ A minimal web application for analyzing padel video technique using AI-powered p
 │   ├── analyzer.ts      # Python script wrapper
 │   ├── ffmpeg.ts        # Video processing utilities
 │   ├── fs-storage.ts    # File system operations
+│   ├── pose-detector.ts # MediaPipe pose detection
+│   ├── pose-data.ts     # Pose data structures and types
+│   ├── movement-sync.ts # Movement synchronization logic
+│   ├── vercel-storage.ts # Vercel storage integration
 │   └── utils.ts         # General utilities
 ├── server/python/       # Python analysis script
 └── storage/            # Local file storage
@@ -163,9 +169,9 @@ The current implementation processes videos synchronously (blocking). To upgrade
 - For better results, install MediaPipe: `pip install mediapipe opencv-python numpy`
 
 **"File upload fails" error:**
-- Check file size (max 100MB)
+- Check file size (max 10MB)
 - Verify file format (MP4, MOV, AVI)
-- Ensure `storage/uploads` directory exists and is writable
+- Ensure `storage/uploads` directory exists and is writable (created automatically on first run)
 
 ### File Permissions
 

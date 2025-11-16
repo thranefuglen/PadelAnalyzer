@@ -49,10 +49,10 @@ export default function ReferenceAnalysisButton() {
 
       await new Promise((resolve, reject) => {
         video.onloadedmetadata = resolve
-        video.onerror = () => reject(new Error('Video file not found. Please add "Good Slice.mp4" to the PadelVideos directory.'))
+        video.onerror = () => reject(new Error('Video file not found. Please add "Good slice.mp4" to the PadelVideos directory.'))
 
         // Timeout after 10 seconds
-        setTimeout(() => reject(new Error('Video loading timed out. Please check that "Good Slice.mp4" exists in the PadelVideos directory.')), 10000)
+        setTimeout(() => reject(new Error('Video loading timed out. Please check that "Good slice.mp4" exists in the PadelVideos directory.')), 10000)
       })
 
       const fps = 30
@@ -131,7 +131,7 @@ export default function ReferenceAnalysisButton() {
         <p className="text-sm text-muted-foreground">{status}</p>
       )}
       <p className="text-xs text-muted-foreground text-center max-w-md">
-        Analyze the professional reference video (Good Slice.mp4) once. This will be used to compare with user uploads.
+        Analyze the professional reference video (Good slice.mp4) once. This will be used to compare with user uploads.
       </p>
     </div>
   )

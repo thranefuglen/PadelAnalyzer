@@ -7,7 +7,7 @@ import path from 'path';
 import fs from 'fs/promises';
 
 const TEST_VIDEO_PATH = path.join(process.cwd(), 'PadelVideos', 'Bad Slice.mp4');
-const REFERENCE_VIDEO_PATH = path.join(process.cwd(), 'PadelVideos', 'Good Slice.mp4');
+const REFERENCE_VIDEO_PATH = path.join(process.cwd(), 'PadelVideos', 'Good slice.mp4');
 const REFERENCE_DATA_PATH = path.join(process.cwd(), 'data', 'reference-analysis.json');
 
 export async function POST(request: NextRequest) {

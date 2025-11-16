@@ -3,7 +3,7 @@ import path from 'path';
 import fs from 'fs/promises';
 import type { PoseFrame } from '@/lib/pose-data';
 
-const REFERENCE_VIDEO_PATH = path.join(process.cwd(), 'PadelVideos', 'Good Slice.mp4');
+const REFERENCE_VIDEO_PATH = path.join(process.cwd(), 'PadelVideos', 'Good slice.mp4');
 const REFERENCE_DATA_PATH = path.join(process.cwd(), 'data', 'reference-analysis.json');
 
 export async function POST() {
@@ -41,7 +41,7 @@ export async function PUT(request: Request) {
     const metrics = calculateMetricsFromPose(frames);
 
     const referenceData = {
-      videoName: 'Good Slice.mp4',
+      videoName: 'Good slice.mp4',
       analyzedAt: new Date().toISOString(),
       metrics,
       fps: fps || 30,

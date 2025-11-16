@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import path from 'path';
 import fs from 'fs/promises';
 
-const REFERENCE_VIDEO_PATH = path.join(process.cwd(), 'PadelVideos', 'Good Slice.mp4');
+const REFERENCE_VIDEO_PATH = path.join(process.cwd(), 'PadelVideos', 'Good slice.mp4');
 
 export async function GET() {
   try {

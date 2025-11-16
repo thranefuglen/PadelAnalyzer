@@ -1,12 +1,16 @@
 # Reference Videos Directory
 
-This directory should contain reference videos for comparison analysis.
+This directory contains reference videos for comparison analysis.
 
-## Required File
+## Current Files
 
-To use the reference video analysis feature, place a professional padel slice video here:
+- **Good slice.mp4** - Professional reference video for comparison
+- **Bad Slice.mp4** - Default test video for demonstration
+- **Single hit.mp4** - Alternative test video
 
-**Filename:** `Good Slice.mp4`
+## Reference Video
+
+The reference video (`Good slice.mp4`) is used for comparing user uploads.
 
 ### Video Requirements
 
@@ -17,10 +21,14 @@ To use the reference video analysis feature, place a professional padel slice vi
 
 ## How It Works
 
-1. Place your reference video (named `Good Slice.mp4`) in this directory
-2. Use the "Analyze Reference Video" button on the homepage
-3. The system will analyze the professional technique and save it
-4. When users upload their videos, they'll see a comparison with this reference
+1. The reference video (`Good slice.mp4`) is analyzed using the "Analyze Reference Video" button on the homepage
+2. The system analyzes the professional technique and saves it
+3. When users upload their videos, they'll see a comparison with this reference
+
+## Test Videos
+
+- **Bad Slice.mp4** - The default test video used when no video is uploaded
+- **Single hit.mp4** - Alternative test video for demonstration and testing
 
 ## Note
 

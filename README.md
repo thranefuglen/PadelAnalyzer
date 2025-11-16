@@ -52,11 +52,18 @@ A minimal web application for analyzing padel video technique using AI-powered p
    ```
 
 3. **(Optional) Install Python dependencies for better analysis:**
+
+   **Windows:**
+   ```bash
+   py -m pip install mediapipe opencv-python numpy
+   ```
+
+   **macOS/Linux:**
    ```bash
    pip install mediapipe opencv-python numpy
    ```
 
-   > **Note:** If MediaPipe is not installed, the system will automatically use a fallback analysis that still provides meaningful results.
+   > **Note:** Python dependencies are completely optional. If not installed, the system automatically uses a fallback analysis with synthetic data that still demonstrates the application's functionality.
 
 4. **Start the development server:**
    ```bash
@@ -166,7 +173,9 @@ The current implementation processes videos synchronously (blocking). To upgrade
 
 **"Python analysis failed" error:**
 - The system will automatically fall back to synthetic analysis
-- For better results, install MediaPipe: `pip install mediapipe opencv-python numpy`
+- For better results, install MediaPipe:
+  - Windows: `py -m pip install mediapipe opencv-python numpy`
+  - macOS/Linux: `pip install mediapipe opencv-python numpy`
 
 **"File upload fails" error:**
 - Check file size (max 10MB)

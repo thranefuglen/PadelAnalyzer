@@ -141,10 +141,20 @@ export default function PoseVisualization({ poseData, videoPath }: PoseVisualiza
   useEffect(() => {
     // Load video
     if (videoRef.current) {
-      videoRef.current.src = '/api/test-video'
-      videoRef.current.onloadedmetadata = () => {
+      const video = videoRef.current
+      video.src = '/api/test-video'
+
+      video.onloadedmetadata = () => {
         setVideoLoaded(true)
       }
+
+      video.onerror = (e) => {
+        console.error('Video load error:', e)
+        setVideoLoaded(false)
+      }
+
+      // Force browser to start loading
+      video.load()
     }
   }, [])
 
@@ -177,6 +187,7 @@ export default function PoseVisualization({ poseData, videoPath }: PoseVisualiza
               className="w-full h-auto"
               muted
               playsInline
+              preload="metadata"
             />
           </div>
 

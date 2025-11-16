@@ -559,16 +559,37 @@ export default function ComparisonVisualization({
   useEffect(() => {
     // Load videos
     if (userVideoRef.current) {
-      userVideoRef.current.src = '/api/test-video'
-      userVideoRef.current.onloadedmetadata = () => {
+      const userVideo = userVideoRef.current
+      userVideo.src = '/api/test-video'
+
+      userVideo.onloadedmetadata = () => {
         setVideosLoaded(prev => ({ ...prev, user: true }))
       }
+
+      userVideo.onerror = (e) => {
+        console.error('User video load error:', e)
+        setVideosLoaded(prev => ({ ...prev, user: false }))
+      }
+
+      // Force browser to start loading
+      userVideo.load()
     }
+
     if (refVideoRef.current) {
-      refVideoRef.current.src = '/api/reference-video'
-      refVideoRef.current.onloadedmetadata = () => {
+      const refVideo = refVideoRef.current
+      refVideo.src = '/api/reference-video'
+
+      refVideo.onloadedmetadata = () => {
         setVideosLoaded(prev => ({ ...prev, ref: true }))
       }
+
+      refVideo.onerror = (e) => {
+        console.error('Reference video load error:', e)
+        setVideosLoaded(prev => ({ ...prev, ref: false }))
+      }
+
+      // Force browser to start loading
+      refVideo.load()
     }
   }, [])
 
@@ -613,6 +634,7 @@ export default function ComparisonVisualization({
                 className="w-full h-auto"
                 muted
                 playsInline
+                preload="metadata"
               />
             </div>
 
@@ -626,6 +648,7 @@ export default function ComparisonVisualization({
                 className="w-full h-auto"
                 muted
                 playsInline
+                preload="metadata"
               />
             </div>
           </div>
@@ -643,6 +666,7 @@ export default function ComparisonVisualization({
                 className="w-full h-auto"
                 muted
                 playsInline
+                preload="metadata"
               />
               <canvas
                 ref={overlayCanvasRef}

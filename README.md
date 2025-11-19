@@ -215,3 +215,13 @@ This project uses open-source libraries with permissive licenses that allow comm
 All third-party licenses and copyright notices are documented in [LICENSES.md](LICENSES.md).
 
 **Commercial Use:** All dependencies permit commercial use without restrictions. You are free to use this software for commercial purposes while complying with the attribution requirements outlined in the license files.
+
+## AI Agent Guidance
+
+If you are using AI coding assistants (Copilot / others), see `.github/AGENTS.md` for:
+- Architecture & data flow summary (frontend ↔ API ↔ Python pipeline)
+- Metric conventions (`elbowAngleMax`, `shoulderRotationProxy`, `tempoSeries`, `impactFrames`)
+- Storage abstraction differences (`fs-storage` vs `vercel-storage`)
+- Safe extension guidelines (backwards-compatible metric additions)
+
+When adding new metrics, update both the Python output (`server/python/analyze.py`) and TypeScript `AnalysisResult` structure, keeping existing fields stable. Heavy computation should live in Python or future workers, not API route handlers.
